@@ -1,1 +1,0 @@
-# cybersecurity-internship-program-2025
