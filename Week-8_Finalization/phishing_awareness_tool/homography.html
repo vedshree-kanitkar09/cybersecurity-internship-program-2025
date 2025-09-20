@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Homograph Generator & Detector (All-in-One)</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f7f7f7; padding: 30px; color: #333; }
+    .tool-container { max-width: 500px; margin: 25px auto; background: #fff; padding: 22px 28px; border-radius: 10px; box-shadow: 0 2px 12px #e0e0e0; }
+    h2, .logo { text-align: center; font-weight: bold; margin-bottom: 15px; color: #25a244; }
+    input { width: 100%; padding: 10px; font-size: 15px; margin-bottom: 12px; border-radius: 5px; border: 1px solid #bbb; }
+    button { cursor: pointer; border: none; color: #fff; font-size: 14px; padding: 8px 12px; border-radius: 5px; margin: 5px 3px; }
+    .btn-green { background: #25a244; }
+    .btn-green:hover { background: #188038; }
+    .btn-blue { background: #1976d2; }
+    .btn-blue:hover { background: #145ba1; }
+    .output, .alert { padding: 10px; border-radius: 6px; margin-top: 10px; font-size: 16px; word-break: break-word; }
+    .output { background: #f4f4f4; font-family: monospace; }
+    .swapped { color: #d7263d; font-weight: bold; }
+    .note { font-size: 12px; color: #777; margin-top: 5px; }
+    .alert.danger { background: #ffefef; color: #d7263d; border: 1px solid #f6cac7; }
+    .alert.safe { background: #eeffe6; color: #218c5a; border: 1px solid #b2daf7; }
+  </style>
+</head>
+<body>
+
+  <!-- Homograph Generator -->
+  <div class="tool-container">
+    <div class="logo">Homograph Generator</div>
+    <input id="inputText" type="text" placeholder="Enter text (e.g. google.com)" />
+    <button class="btn-green" onclick="generate()">Generate</button>
+    <div class="output" id="output"></div>
+    <div class="note">Red = swapped Unicode character</div>
+  </div>
+
+  <!-- Homograph Detector -->
+  <div class="tool-container">
+    <h2>Homograph Detector</h2>
+    <input type="text" id="domainInput" placeholder="Enter domain (e.g. fасеbооk.com)" />
+    <button class="btn-blue" onclick="checkHomograph()">Check</button>
+    <div id="result"></div>
+  </div>
+
+  <script>
+    /* ---------- Homograph Generator ---------- */
+    const homoglyphTable = {
+      'A': 'Α','B': 'Β','C': 'С','E': 'Ε','H': 'Н','I': 'І','J': 'Ј','K': 'Κ','M': 'М',
+      'N': 'Ν','O': 'О','P': 'Р','S': 'Ѕ','T': 'Τ','X': 'Χ','Y': 'Υ','a': 'а','c': 'с',
+      'e': 'е','i': 'і','j': 'ј','o': 'о','p': 'р','s': 'ѕ','x': 'х','d': 'ԁ','q': 'ԛ',
+      'y': 'у','r': 'г','v': 'ѵ','w': 'ѡ'
+    };
+
+    function generate() {
+      const text = document.getElementById('inputText').value;
+      let result = '';
+      for (let ch of text) {
+        result += homoglyphTable[ch] ? `<span class="swapped">${homoglyphTable[ch]}</span>` : ch;
+      }
+      document.getElementById('output').innerHTML = result || '(No input)';
+    }
+
+    /* ---------- Extended Homograph Detector ---------- */
+    const extendedHomographs = {
+      "A": ["А","Α","Ꭺ","Á","À","Â","Ä","Ã","Å","Ă","Ą"],
+      "B": ["Β","В","Ᏼ","Ḃ","Ɓ"],
+      "C": ["С","Ϲ","Ç","Ċ","Ĉ","Ć"],
+      "D": ["Ԁ","ԁ","Ď","Đ","Ḋ"],
+      "E": ["Е","Ε","ℰ","É","È","Ê","Ë","Ē","Ĕ","Ė","Ę","Ě"],
+      "F": ["Ғ","Ƒ","Ḟ"],
+      "G": ["Ԍ","Ĝ","Ğ","Ġ","Ģ"],
+      "H": ["Н","Ĥ","Ḧ","Ħ"],
+      "I": ["І","Ι","Í","Ì","Î","Ï","Ĩ","Ī","Ĭ","Į","İ"],
+      "J": ["Ј","Ĵ"],
+      "K": ["Κ","К","Ķ","Ḱ"],
+      "L": ["Ꮮ","ⅼ","Ĺ","Ļ","Ľ","Ł"],
+      "M": ["М","Ϻ","Ḿ"],
+      "N": ["Ν","Ñ","Ń","Ņ","Ň","Ṅ"],
+      "O": ["О","Ο","0","Ó","Ò","Ô","Ö","Õ","Ō","Ŏ","Ő","Ø"],
+      "P": ["Р","Ρ","Ṕ","Ƥ"],
+      "Q": ["Ԛ"],
+      "R": ["Г","Ŕ","Ř","Ṙ"],
+      "S": ["Ѕ","Ś","Ŝ","Ş","Š","Ṡ"],
+      "T": ["Т","Τ","Ť","Ţ","Ṫ"],
+      "U": ["Ս","Ú","Ù","Û","Ü","Ũ","Ū","Ŭ","Ů","Ű","Ų"],
+      "V": ["Ѵ","Ṽ","Ṿ"],
+      "W": ["Ԝ","Ѡ","Ŵ","Ẁ","Ẃ","Ẅ"],
+      "X": ["Χ","Х"],
+      "Y": ["Υ","Ү","Ý","Ŷ","Ÿ","Ỳ","Ẏ"],
+      "Z": ["Ζ","Ź","Ż","Ž","Ẓ"],
+      "a": ["а","á","à","â","ä","ã","å","ă","ą"],
+      "b": ["Ь","ƀ","ƃ","ḃ"],
+      "c": ["с","ç","ċ","ĉ","ć"],
+      "d": ["ԁ","ď","đ","ḋ"],
+      "e": ["е","é","è","ê","ë","ē","ĕ","ė","ę","ě"],
+      "f": ["ғ","ƒ","ḟ"],
+      "g": ["ĝ","ğ","ġ","ģ"],
+      "h": ["һ","ĥ","ḧ","ħ"],
+      "i": ["і","í","ì","î","ï","ĩ","ī","ĭ","į","ı"],
+      "j": ["ј","ĵ"],
+      "k": ["κ","к","ķ","ḱ"],
+      "l": ["ⅼ","ĺ","ļ","ľ","ł"],
+      "m": ["м","ḿ"],
+      "n": ["п","ñ","ń","ņ","ň","ṅ"],
+      "o": ["о","ο","ó","ò","ô","ö","õ","ō","ŏ","ő","ø"],
+      "p": ["р","ρ","ṕ","ƥ"],
+      "q": ["ԛ"],
+      "r": ["г","ŕ","ř","ṙ"],
+      "s": ["ѕ","ś","ŝ","ş","š","ṡ"],
+      "t": ["т","τ","ť","ţ","ṫ"],
+      "u": ["ս","ú","ù","û","ü","ũ","ū","ŭ","ů","ű","ų"],
+      "v": ["ѵ","ṽ","ṿ"],
+      "w": ["ԝ","ŵ","ẁ","ẃ","ẅ"],
+      "x": ["χ","х"],
+      "y": ["ү","ý","ŷ","ÿ","ỳ","ẏ"],
+      "z": ["ζ","ź","ż","ž","ẓ"]
+    };
+
+    function checkHomograph() {
+      const domain = document.getElementById('domainInput').value;
+      let suspicious = false;
+      let converted = "";
+
+      for (let ch of domain) {
+        let found = false;
+        for (let [base, homoglyphs] of Object.entries(extendedHomographs)) {
+          if (homoglyphs.includes(ch)) {
+            suspicious = true;
+            converted += base;
+            found = true;
+            break;
+          }
+        }
+        if (!found) converted += ch;
+      }
+
+      const resultDiv = document.getElementById('result');
+      resultDiv.innerHTML = suspicious
+        ? `<div class="alert danger">⚠️ Warning: This may be a homograph attack!<br>Converted: <strong>${converted}</strong></div>`
+        : `<div class="alert safe">✅ This domain looks safe (no obvious homoglyphs found).</div>`;
+    }
+  </script>
+</body>
+</html>
